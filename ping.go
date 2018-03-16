@@ -48,8 +48,6 @@ import (
 	"math"
 	"math/rand"
 	"net"
-	"os"
-	"os/signal"
 	"sync"
 	"syscall"
 	"time"
@@ -287,15 +285,10 @@ func (p *Pinger) run() {
 	timeout := time.NewTicker(p.Timeout)
 	defer timeout.Stop()
 	interval := time.NewTicker(p.Interval)
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
 	defer interval.Stop()
 
 	for {
 		select {
-		case <-c:
-			close(p.done)
 		case <-p.done:
 			wg.Wait()
 			return
@@ -321,6 +314,12 @@ func (p *Pinger) run() {
 			}
 		}
 	}
+}
+
+// Stop stops the pinger. This is performed asynchronously. The pinger finishes processing any packet it has
+// received then exits silently.
+func (p *Pinger) Stop() {
+	close(p.done)
 }
 
 func (p *Pinger) finish() {
