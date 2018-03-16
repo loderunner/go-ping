@@ -279,7 +279,7 @@ func (p *Pinger) run() {
 
 	err := p.sendICMP(conn)
 	if err != nil {
-		fmt.Println(err.Error())
+		return
 	}
 
 	timeout := time.NewTicker(p.Timeout)
@@ -299,12 +299,16 @@ func (p *Pinger) run() {
 		case <-interval.C:
 			err = p.sendICMP(conn)
 			if err != nil {
-				fmt.Println("FATAL: ", err.Error())
+				close(p.done)
+				wg.Wait()
+				return
 			}
 		case r := <-recv:
 			err := p.processPacket(r)
 			if err != nil {
-				fmt.Println("FATAL: ", err.Error())
+				close(p.done)
+				wg.Wait()
+				return
 			}
 		default:
 			if p.Count > 0 && p.PacketsRecv >= p.Count {
@@ -500,7 +504,6 @@ func (p *Pinger) sendICMP(conn *icmp.PacketConn) error {
 func (p *Pinger) listen(netProto string, source string) *icmp.PacketConn {
 	conn, err := icmp.ListenPacket(netProto, source)
 	if err != nil {
-		fmt.Printf("Error listening for ICMP packets: %s\n", err.Error())
 		close(p.done)
 		return nil
 	}
