@@ -285,10 +285,12 @@ func (p *Pinger) run() {
 	}
 
 	timeout := time.NewTicker(p.Timeout)
+	defer timeout.Stop()
 	interval := time.NewTicker(p.Interval)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
+	defer interval.Stop()
 
 	for {
 		select {
