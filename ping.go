@@ -92,8 +92,6 @@ func NewPinger(addr string) (*Pinger, error) {
 		network: "udp",
 		ipv4:    ipv4,
 		size:    timeSliceLength,
-
-		done: make(chan bool),
 	}, nil
 }
 
@@ -272,6 +270,8 @@ func (p *Pinger) run() {
 	defer conn.Close()
 	defer p.finish()
 
+	p.reset()
+
 	var wg sync.WaitGroup
 	recv := make(chan *packet, 5)
 	wg.Add(1)
@@ -324,6 +324,13 @@ func (p *Pinger) run() {
 // received then exits silently.
 func (p *Pinger) Stop() {
 	close(p.done)
+}
+
+func (p *Pinger) reset() {
+	p.done = make(chan bool)
+	p.PacketsSent = 0
+	p.PacketsRecv = 0
+	p.rtts = nil
 }
 
 func (p *Pinger) finish() {
