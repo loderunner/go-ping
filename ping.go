@@ -257,6 +257,8 @@ func (p *Pinger) Run() {
 }
 
 func (p *Pinger) run() {
+	p.reset()
+
 	var conn *icmp.PacketConn
 	if p.ipv4 {
 		if conn = p.listen(ipv4Proto[p.network], p.source); conn == nil {
@@ -269,8 +271,6 @@ func (p *Pinger) run() {
 	}
 	defer conn.Close()
 	defer p.finish()
-
-	p.reset()
 
 	var wg sync.WaitGroup
 	recv := make(chan *packet, 5)
